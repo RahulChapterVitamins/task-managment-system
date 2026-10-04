@@ -11,13 +11,19 @@ import { formatTimelineRange } from "@/lib/progress";
 import type { TaskDetail } from "@/lib/db/queries";
 import type { Workspace } from "@/lib/types/app";
 import { workspaceLabel } from "@/lib/utils/workspace";
+import { cn } from "@/lib/utils/cn";
 
 type TaskDetailViewProps = {
   workspace: Workspace;
   detail: TaskDetail;
+  compact?: boolean;
 };
 
-export function TaskDetailView({ workspace, detail }: TaskDetailViewProps) {
+export function TaskDetailView({
+  workspace,
+  detail,
+  compact = false,
+}: TaskDetailViewProps) {
   const { task, subtaskTree, reviews } = detail;
 
   return (
@@ -28,12 +34,14 @@ export function TaskDetailView({ workspace, detail }: TaskDetailViewProps) {
         title={task.title}
       />
       <div className="border-b border-border px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
-        <Link
-          href={`/${workspace}`}
-          className="text-sm text-accent hover:text-foreground"
-        >
-          ← Back to {workspaceLabel(workspace)}
-        </Link>
+        {!compact && (
+          <Link
+            href={`/${workspace}`}
+            className="text-sm text-accent hover:text-foreground"
+          >
+            ← Back to {workspaceLabel(workspace)}
+          </Link>
+        )}
 
         <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
@@ -63,7 +71,12 @@ export function TaskDetailView({ workspace, detail }: TaskDetailViewProps) {
         </div>
       </div>
 
-      <div className="grid gap-4 px-4 py-5 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-8 lg:py-6">
+      <div
+        className={cn(
+          "grid gap-4 px-4 py-5 sm:grid-cols-2 sm:px-6 lg:px-8 lg:py-6",
+          !compact && "lg:grid-cols-4"
+        )}
+      >
         <InfoCard title="Purpose" value={task.purpose} />
         <InfoCard title="Expected result" value={task.expected_result} />
         <InfoCard
@@ -78,7 +91,12 @@ export function TaskDetailView({ workspace, detail }: TaskDetailViewProps) {
         </Card>
       </div>
 
-      <div className="grid flex-1 gap-6 px-4 pb-8 sm:px-6 lg:grid-cols-2 lg:px-8 animate-fade-in">
+      <div
+        className={cn(
+          "grid flex-1 gap-6 px-4 pb-8 sm:px-6 lg:px-8 animate-fade-in",
+          !compact && "lg:grid-cols-2"
+        )}
+      >
         <Card>
           <CardHeader>
             <CardTitle>Subtasks</CardTitle>

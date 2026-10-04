@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Briefcase, Target } from "lucide-react";
+import { Briefcase, Target, type LucideIcon } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CircularProgress } from "@/components/ui/circular-progress";
@@ -7,7 +7,7 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { MonthlyEntriesPanel } from "@/components/monthly/monthly-entries-panel";
 import { TaskStatusPieChart } from "@/components/monthly/task-status-pie-chart";
 import { DownloadAllTasksButton } from "@/components/monthly/download-all-tasks-button";
-import { getMonthlyDashboardData } from "@/lib/db/queries";
+import { getMonthlyDashboardData, type TaskListItem } from "@/lib/db/queries";
 import { getMonthlyEntries } from "@/lib/db/monthly";
 
 type MonthlyPageProps = {
@@ -107,25 +107,17 @@ export default async function MonthlyPage({ searchParams }: MonthlyPageProps) {
             <CardHeader>
               <CardTitle>Goal Progress</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {data.allTasks.length === 0 ? (
-                <p className="text-sm text-muted">No goals or tasks yet.</p>
-              ) : (
-                data.allTasks.slice(0, 6).map((task) => (
-                  <div key={task.id} className="space-y-2">
-                    <div className="flex items-center justify-between gap-3 text-sm">
-                      <Link
-                        href={`/${task.workspace}/${task.id}`}
-                        className="truncate font-medium text-foreground hover:text-accent"
-                      >
-                        {task.title}
-                      </Link>
-                      <span className="text-muted">{task.progress}%</span>
-                    </div>
-                    <ProgressBar value={task.progress} />
-                  </div>
-                ))
-              )}
+            <CardContent className="space-y-6">
+              <GoalProgressGroup
+                label="Office"
+                icon={Briefcase}
+                tasks={data.officeTasks}
+              />
+              <GoalProgressGroup
+                label="Personal"
+                icon={Target}
+                tasks={data.personalTasks}
+              />
             </CardContent>
           </Card>
         </div>
@@ -189,6 +181,48 @@ function StatCard({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function GoalProgressGroup({
+  label,
+  icon: Icon,
+  tasks,
+}: {
+  label: string;
+  icon: LucideIcon;
+  tasks: TaskListItem[];
+}) {
+  const activeTasks = tasks.filter((task) => task.status !== "done");
+  const visible = (activeTasks.length > 0 ? activeTasks : tasks).slice(0, 4);
+
+  return (
+    <div>
+      <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+        <Icon className="h-3.5 w-3.5 text-accent" />
+        {label}
+      </p>
+      {visible.length === 0 ? (
+        <p className="text-sm text-muted">No goals or tasks yet.</p>
+      ) : (
+        <div className="space-y-4">
+          {visible.map((task) => (
+            <div key={task.id} className="space-y-2">
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <Link
+                  href={`/${task.workspace}/${task.id}`}
+                  className="truncate font-medium text-foreground hover:text-accent"
+                >
+                  {task.title}
+                </Link>
+                <span className="shrink-0 text-muted">{task.progress}%</span>
+              </div>
+              <ProgressBar value={task.progress} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -12,9 +12,10 @@ import { cn } from "@/lib/utils/cn";
 type AppShellClientProps = {
   userEmail?: string | null;
   children: React.ReactNode;
+  modal: React.ReactNode;
 };
 
-export function AppShellClient({ userEmail, children }: AppShellClientProps) {
+export function AppShellClient({ userEmail, children, modal }: AppShellClientProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const hideSidebar = pathname === "/";
@@ -96,6 +97,8 @@ export function AppShellClient({ userEmail, children }: AppShellClientProps) {
             );
           })}
       </nav>
+
+      {modal}
     </div>
   );
 }

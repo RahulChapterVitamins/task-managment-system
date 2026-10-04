@@ -130,6 +130,29 @@ textarea {
       transform: translateY(0) scale(1);
     }
   }
+
+  @keyframes slide-in-right {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes pop-in {
+    0% {
+      transform: scale(0.85);
+      opacity: 0;
+    }
+    60% {
+      transform: scale(1.06);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
 }
 
 .animate-fade-in {
@@ -144,6 +167,14 @@ textarea {
   animation: modal-in 0.22s ease-out both;
 }
 
+.animate-slide-in-right {
+  animation: slide-in-right 0.28s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.animate-pop-in {
+  animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
 .nav-active-pill {
   background: var(--nav-active);
   color: #0b0b0c;
@@ -156,7 +187,9 @@ textarea {
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in,
   .animate-scale-in,
-  .animate-modal-in {
+  .animate-modal-in,
+  .animate-slide-in-right,
+  .animate-pop-in {
     animation: none;
   }
 }

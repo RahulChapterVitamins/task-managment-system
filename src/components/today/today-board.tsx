@@ -6,6 +6,7 @@ import { SortableTaskTable } from "@/components/tasks/sortable-task-table";
 import { CopyTasksExcelButton } from "@/components/tasks/copy-tasks-excel-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CircularProgress } from "@/components/ui/circular-progress";
 import {
   addTaskToTodayAction,
   carryOverYesterdayAction,
@@ -45,6 +46,11 @@ export function TodayBoard({ date, todayTasks, availableTasks }: TodayBoardProps
   );
 
   const activeTodayTasks = activeTab === "office" ? officeToday : personalToday;
+
+  const doneCount = todayTasks.filter((task) => task.status === "done").length;
+  const totalCount = todayTasks.length;
+  const todayProgress =
+    totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
 
   const filteredAvailable = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -91,6 +97,22 @@ export function TodayBoard({ date, todayTasks, availableTasks }: TodayBoardProps
 
   return (
     <div className="space-y-5">
+      {totalCount > 0 && (
+        <div className="flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-4 sm:px-5">
+          <CircularProgress value={todayProgress} size={64} strokeWidth={6} />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">
+              {doneCount} of {totalCount} today&apos;s tasks done
+            </p>
+            <p className="mt-0.5 text-xs text-muted">
+              {doneCount === totalCount
+                ? "All done for today — great work!"
+                : `${totalCount - doneCount} left to go. Keep going!`}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted">
           Pick tasks for today and set priority within Office or Personal — separate from your main lists.
