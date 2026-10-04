@@ -4,14 +4,12 @@ import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   DndContext,
-  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   closestCenter,
   useSensor,
   useSensors,
   type DragEndEvent,
-  type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -59,7 +57,6 @@ export function SortableTaskTable({
 }: SortableTaskTableProps) {
   const [tasks, setTasks] = useState(initialTasks);
   const [mounted, setMounted] = useState(false);
-  const [activeId, setActiveId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -71,18 +68,13 @@ export function SortableTaskTable({
   }, [initialTasks]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
-  function handleDragStart(event: DragStartEvent) {
-    setActiveId(String(event.active.id));
-  }
-
   function handleDragEnd(event: DragEndEvent) {
-    setActiveId(null);
     const { active, over } = event;
 
     if (!over || active.id === over.id) {
@@ -120,9 +112,6 @@ export function SortableTaskTable({
     sortable: mounted,
   };
 
-  const activeTask = activeId ? tasks.find((task) => task.id === activeId) : undefined;
-  const activePriority = activeTask ? tasks.indexOf(activeTask) + 1 : 0;
-
   return (
     <div className={cn("space-y-3", pending && "opacity-70")}>
       {sectionTitle && (
@@ -134,9 +123,7 @@ export function SortableTaskTable({
           id={dndId}
           sensors={sensors}
           collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
-          onDragCancel={() => setActiveId(null)}
         >
           <SortableContext
             items={tasks.map((task) => task.id)}
@@ -145,11 +132,6 @@ export function SortableTaskTable({
             <TaskListDesktop {...sharedProps} />
             <TaskListMobile {...sharedProps} />
           </SortableContext>
-          <DragOverlay>
-            {activeTask && (
-              <DragPreviewCard task={activeTask} priority={activePriority} />
-            )}
-          </DragOverlay>
         </DndContext>
       ) : (
         <>
@@ -468,16 +450,15 @@ function SortableDesktopRow(props: TaskRowProps) {
         isDragging && "relative z-10 bg-card-hover shadow-md"
       )}
     >
-      <td className="p-0">
+      <td className="px-2 py-3">
         <button
           type="button"
-          className="flex h-full min-h-12 w-12 cursor-grab touch-none items-center justify-center border border-transparent text-muted hover:border-border hover:bg-background hover:text-primary active:cursor-grabbing active:border-primary/40 active:bg-primary/10 active:text-primary"
-          style={{ touchAction: "none" }}
+          className="inline-flex h-10 w-10 cursor-grab items-center justify-center rounded-md text-muted hover:bg-background hover:text-foreground active:cursor-grabbing"
           aria-label={`Reorder ${task.title}`}
           {...attributes}
           {...listeners}
         >
-          <GripVertical className="h-5 w-5" />
+          <GripVertical className="h-4 w-4" />
         </button>
       </td>
       {showPriority && (
@@ -543,17 +524,16 @@ function MobileCard({
   const dragHandle = sortable ? (
     <button
       type="button"
-      className="flex h-full w-12 shrink-0 cursor-grab touch-none items-center justify-center border-r border-border/60 text-muted hover:bg-background hover:text-primary active:cursor-grabbing active:bg-primary/10 active:text-primary"
-      style={{ touchAction: "none" }}
+      className="inline-flex h-10 w-10 shrink-0 cursor-grab items-center justify-center rounded-lg text-muted hover:bg-background hover:text-foreground active:cursor-grabbing"
       aria-label={`Reorder ${task.title}`}
       {...sortableState.attributes}
       {...sortableState.listeners}
     >
-      <GripVertical className="h-5 w-5" />
+      <GripVertical className="h-4 w-4" />
     </button>
   ) : (
-    <span className="flex w-12 shrink-0 items-center justify-center border-r border-border/60 text-muted">
-      <GripVertical className="h-5 w-5 opacity-30" />
+    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center text-muted">
+      <GripVertical className="h-4 w-4 opacity-30" />
     </span>
   );
 
@@ -569,59 +549,45 @@ function MobileCard({
           : undefined
       }
       className={cn(
-        "flex overflow-hidden rounded-xl border border-border/80 bg-card",
+        "overflow-hidden rounded-xl border border-border/80 bg-card",
         sortable && sortableState.isDragging && "relative z-10 shadow-lg ring-1 ring-primary/30"
       )}
     >
-      {dragHandle}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start gap-2 p-3">
-          {showPriority && <PriorityBadge value={priority} className="mt-0.5" />}
-          <div className="min-w-0 flex-1 pt-0.5">
-            <Link
-              href={`/${task.workspace}/${task.id}`}
-              className="line-clamp-2 text-sm font-semibold leading-snug text-foreground hover:text-accent"
-            >
-              {task.title}
-            </Link>
-          </div>
-          <TaskActionsMobile task={task} returnTo={returnTo} onRemove={onRemove} />
+      <div className="flex items-start gap-2 p-3">
+        {dragHandle}
+        {showPriority && <PriorityBadge value={priority} className="mt-0.5" />}
+        <div className="min-w-0 flex-1 pt-0.5">
+          <Link
+            href={`/${task.workspace}/${task.id}`}
+            className="line-clamp-2 text-sm font-semibold leading-snug text-foreground hover:text-accent"
+          >
+            {task.title}
+          </Link>
         </div>
+        <TaskActionsMobile task={task} returnTo={returnTo} onRemove={onRemove} />
+      </div>
 
-        <div className="space-y-2.5 border-t border-border/50 px-3 py-2.5">
-          <TaskMeta
-            task={task}
-            showCategory={showCategory}
-            showWorkspace={showWorkspace}
-          />
+      <div className="space-y-2.5 border-t border-border/50 px-3 py-2.5">
+        <TaskMeta
+          task={task}
+          showCategory={showCategory}
+          showWorkspace={showWorkspace}
+        />
 
-          <div className="flex items-end gap-3">
-            <div className="min-w-0 flex-1">
-              <ProgressBar value={task.progress} size="sm" showLabel />
-            </div>
-            <TaskStatusSelect
-              workspace={task.workspace}
-              taskId={task.id}
-              status={task.status}
-              compact
-              className="w-[8.5rem] shrink-0"
-            />
+        <div className="flex items-end gap-3">
+          <div className="min-w-0 flex-1">
+            <ProgressBar value={task.progress} size="sm" showLabel />
           </div>
+          <TaskStatusSelect
+            workspace={task.workspace}
+            taskId={task.id}
+            status={task.status}
+            compact
+            className="w-[8.5rem] shrink-0"
+          />
         </div>
       </div>
     </li>
-  );
-}
-
-function DragPreviewCard({ task, priority }: { task: TaskListItem; priority: number }) {
-  return (
-    <div className="flex w-[min(90vw,26rem)] cursor-grabbing items-center gap-3 rounded-xl border border-primary bg-card px-3 py-2.5 shadow-xl shadow-primary/20 ring-2 ring-primary/40">
-      <GripVertical className="h-4 w-4 shrink-0 text-primary" />
-      <PriorityBadge value={priority} />
-      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
-        {task.title}
-      </span>
-    </div>
   );
 }
 
