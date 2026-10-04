@@ -468,10 +468,10 @@ function SortableDesktopRow(props: TaskRowProps) {
         isDragging && "relative z-10 bg-card-hover shadow-md"
       )}
     >
-      <td className="px-2 py-3">
+      <td className="p-0">
         <button
           type="button"
-          className="inline-flex h-9 w-9 cursor-grab items-center justify-center rounded-md border border-transparent text-muted hover:border-border hover:bg-background hover:text-primary active:cursor-grabbing active:border-primary/40 active:bg-primary/10 active:text-primary touch-manipulation"
+          className="flex h-full min-h-12 w-12 cursor-grab touch-none items-center justify-center border border-transparent text-muted hover:border-border hover:bg-background hover:text-primary active:cursor-grabbing active:border-primary/40 active:bg-primary/10 active:text-primary"
           aria-label={`Reorder ${task.title}`}
           {...attributes}
           {...listeners}
@@ -542,7 +542,7 @@ function MobileCard({
   const dragHandle = sortable ? (
     <button
       type="button"
-      className="inline-flex h-11 w-11 shrink-0 cursor-grab items-center justify-center rounded-lg border border-transparent text-muted hover:border-border hover:bg-background hover:text-primary active:cursor-grabbing active:border-primary/40 active:bg-primary/10 active:text-primary touch-manipulation"
+      className="flex h-full w-12 shrink-0 cursor-grab touch-none items-center justify-center border-r border-border/60 text-muted hover:bg-background hover:text-primary active:cursor-grabbing active:bg-primary/10 active:text-primary"
       aria-label={`Reorder ${task.title}`}
       {...sortableState.attributes}
       {...sortableState.listeners}
@@ -550,7 +550,7 @@ function MobileCard({
       <GripVertical className="h-5 w-5" />
     </button>
   ) : (
-    <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-muted">
+    <span className="flex w-12 shrink-0 items-center justify-center border-r border-border/60 text-muted">
       <GripVertical className="h-5 w-5 opacity-30" />
     </span>
   );
@@ -567,42 +567,44 @@ function MobileCard({
           : undefined
       }
       className={cn(
-        "overflow-hidden rounded-xl border border-border/80 bg-card",
+        "flex overflow-hidden rounded-xl border border-border/80 bg-card",
         sortable && sortableState.isDragging && "relative z-10 shadow-lg ring-1 ring-primary/30"
       )}
     >
-      <div className="flex items-start gap-2 p-3">
-        {dragHandle}
-        {showPriority && <PriorityBadge value={priority} className="mt-0.5" />}
-        <div className="min-w-0 flex-1 pt-0.5">
-          <Link
-            href={`/${task.workspace}/${task.id}`}
-            className="line-clamp-2 text-sm font-semibold leading-snug text-foreground hover:text-accent"
-          >
-            {task.title}
-          </Link>
-        </div>
-        <TaskActionsMobile task={task} returnTo={returnTo} onRemove={onRemove} />
-      </div>
-
-      <div className="space-y-2.5 border-t border-border/50 px-3 py-2.5">
-        <TaskMeta
-          task={task}
-          showCategory={showCategory}
-          showWorkspace={showWorkspace}
-        />
-
-        <div className="flex items-end gap-3">
-          <div className="min-w-0 flex-1">
-            <ProgressBar value={task.progress} size="sm" showLabel />
+      {dragHandle}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start gap-2 p-3">
+          {showPriority && <PriorityBadge value={priority} className="mt-0.5" />}
+          <div className="min-w-0 flex-1 pt-0.5">
+            <Link
+              href={`/${task.workspace}/${task.id}`}
+              className="line-clamp-2 text-sm font-semibold leading-snug text-foreground hover:text-accent"
+            >
+              {task.title}
+            </Link>
           </div>
-          <TaskStatusSelect
-            workspace={task.workspace}
-            taskId={task.id}
-            status={task.status}
-            compact
-            className="w-[8.5rem] shrink-0"
+          <TaskActionsMobile task={task} returnTo={returnTo} onRemove={onRemove} />
+        </div>
+
+        <div className="space-y-2.5 border-t border-border/50 px-3 py-2.5">
+          <TaskMeta
+            task={task}
+            showCategory={showCategory}
+            showWorkspace={showWorkspace}
           />
+
+          <div className="flex items-end gap-3">
+            <div className="min-w-0 flex-1">
+              <ProgressBar value={task.progress} size="sm" showLabel />
+            </div>
+            <TaskStatusSelect
+              workspace={task.workspace}
+              taskId={task.id}
+              status={task.status}
+              compact
+              className="w-[8.5rem] shrink-0"
+            />
+          </div>
         </div>
       </div>
     </li>

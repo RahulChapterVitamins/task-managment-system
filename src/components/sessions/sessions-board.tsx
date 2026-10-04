@@ -169,7 +169,7 @@ function SessionCard({
         {sortable ? (
           <button
             type="button"
-            className="mt-0.5 inline-flex h-11 w-11 shrink-0 cursor-grab items-center justify-center rounded-lg border border-transparent text-muted hover:border-border hover:bg-background hover:text-primary active:cursor-grabbing active:border-primary/40 active:bg-primary/10 active:text-primary touch-manipulation"
+            className="mt-0.5 inline-flex h-11 w-11 shrink-0 cursor-grab items-center justify-center rounded-lg border border-transparent text-muted hover:border-border hover:bg-background hover:text-primary active:cursor-grabbing active:border-primary/40 active:bg-primary/10 active:text-primary touch-none"
             aria-label={`Reorder ${session.title}`}
             {...sortableState.attributes}
             {...sortableState.listeners}
