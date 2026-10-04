@@ -2,12 +2,8 @@ import Link from "next/link";
 import { ArrowRight, Briefcase, CalendarDays, Sun, Target, Timer } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getWorkspaceStats, getDueSoonTasks } from "@/lib/db/tasks";
-import { getTasksWithProgress } from "@/lib/db/queries";
 import { ContinueTaskCard } from "@/components/tasks/continue-task-card";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
-import { DownloadAllTasksButton } from "@/components/dashboard/download-all-tasks-button";
-import { TaskStatusPieChart } from "@/components/dashboard/task-status-pie-chart";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatTimelineDate } from "@/lib/progress";
 import type { Task } from "@/lib/types/database";
@@ -18,21 +14,13 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [
-    officeStats,
-    personalStats,
-    officeDueSoon,
-    personalDueSoon,
-    officeTasks,
-    personalTasks,
-  ] = await Promise.all([
-    getWorkspaceStats("office"),
-    getWorkspaceStats("personal"),
-    getDueSoonTasks("office"),
-    getDueSoonTasks("personal"),
-    getTasksWithProgress("office"),
-    getTasksWithProgress("personal"),
-  ]);
+  const [officeStats, personalStats, officeDueSoon, personalDueSoon] =
+    await Promise.all([
+      getWorkspaceStats("office"),
+      getWorkspaceStats("personal"),
+      getDueSoonTasks("office"),
+      getDueSoonTasks("personal"),
+    ]);
 
   const firstName = formatFirstName(user?.email);
   const monthLabel = new Date().toLocaleDateString("en-US", {
@@ -61,20 +49,6 @@ export default async function DashboardPage() {
           <QuickLinks />
 
           <ContinueTaskCard />
-
-          <Card>
-            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <CardTitle>Task Status Overview</CardTitle>
-              <DownloadAllTasksButton
-                officeTasks={officeTasks}
-                personalTasks={personalTasks}
-              />
-            </CardHeader>
-            <CardContent className="grid min-w-0 gap-6 sm:grid-cols-2">
-              <TaskStatusPieChart tasks={officeTasks} title="Office" />
-              <TaskStatusPieChart tasks={personalTasks} title="Personal" />
-            </CardContent>
-          </Card>
 
           <div className="grid min-w-0 gap-4 sm:gap-6 lg:grid-cols-2">
             <WorkspaceCard

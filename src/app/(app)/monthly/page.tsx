@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { Briefcase, Target } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CircularProgress } from "@/components/ui/circular-progress";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { MonthlyEntriesPanel } from "@/components/monthly/monthly-entries-panel";
+import { TaskStatusPieChart } from "@/components/monthly/task-status-pie-chart";
+import { DownloadAllTasksButton } from "@/components/monthly/download-all-tasks-button";
 import { getMonthlyDashboardData } from "@/lib/db/queries";
 import { getMonthlyEntries } from "@/lib/db/monthly";
 
@@ -56,6 +59,28 @@ export default async function MonthlyPage({ searchParams }: MonthlyPageProps) {
           <StatCard title="Tasks Pending" value={String(data.pending)} />
           <StatCard title="Overdue" value={String(data.overdue)} accent={data.overdue > 0} />
         </div>
+
+        <Card>
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle>Status Breakdown</CardTitle>
+            <DownloadAllTasksButton
+              officeTasks={data.officeTasks}
+              personalTasks={data.personalTasks}
+            />
+          </CardHeader>
+          <CardContent className="grid min-w-0 gap-4 lg:grid-cols-2">
+            <TaskStatusPieChart
+              tasks={data.officeTasks}
+              title="Office"
+              icon={Briefcase}
+            />
+            <TaskStatusPieChart
+              tasks={data.personalTasks}
+              title="Personal"
+              icon={Target}
+            />
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>

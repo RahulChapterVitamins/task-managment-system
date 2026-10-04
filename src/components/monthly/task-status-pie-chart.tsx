@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import { TASK_STATUSES } from "@/lib/constants/task-status";
 import type { TaskListItem } from "@/lib/db/queries";
 import type { TaskStatus } from "@/lib/types/app";
@@ -13,15 +14,17 @@ const STATUS_COLORS: Record<TaskStatus, string> = {
 type TaskStatusPieChartProps = {
   tasks: TaskListItem[];
   title: string;
+  icon?: LucideIcon;
   size?: number;
 };
 
 export function TaskStatusPieChart({
   tasks,
   title,
-  size = 132,
+  icon: Icon,
+  size = 148,
 }: TaskStatusPieChartProps) {
-  const strokeWidth = 18;
+  const strokeWidth = 20;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const total = tasks.length;
@@ -35,7 +38,7 @@ export function TaskStatusPieChart({
   let offsetSoFar = 0;
 
   return (
-    <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
+    <div className="flex flex-col items-center gap-5 rounded-xl border border-border/70 bg-background/40 p-4 sm:flex-row sm:items-center sm:gap-6 sm:p-5">
       <div className="relative inline-flex shrink-0 items-center justify-center">
         <svg width={size} height={size} className="-rotate-90">
           <circle
@@ -76,7 +79,10 @@ export function TaskStatusPieChart({
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="mb-2 text-sm font-semibold text-foreground">{title}</p>
+        <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground">
+          {Icon && <Icon className="h-4 w-4 text-accent" />}
+          {title}
+        </p>
         {total === 0 ? (
           <p className="text-xs text-muted">No tasks yet.</p>
         ) : (
