@@ -1,46 +1,46 @@
 @import "tailwindcss";
 
-/* "Studio Ink" — warm editorial dark (default) */
+/* "Skyline" — light blue dark mode */
 :root,
 [data-theme="dark"] {
-  --background: #121210;
-  --foreground: #f7f4ee;
-  --card: #1c1a17;
-  --card-hover: #252220;
-  --border: #332e28;
-  --border-muted: #46403a;
-  --primary: #f0a73d;
-  --primary-hover: #e2952a;
-  --primary-foreground: #1a1308;
-  --accent: #8aa6ff;
-  --muted: #a89f92;
-  --success: #7bbf6a;
-  --warning: #d97748;
-  --danger: #e2574c;
-  --surface-glow: rgba(240, 167, 61, 0.1);
-  --nav-active: linear-gradient(90deg, #8aa6ff 0%, #f0a73d 100%);
-  --overlay: rgba(10, 8, 6, 0.75);
+  --background: #0b1320;
+  --foreground: #eef4fc;
+  --card: #121d2f;
+  --card-hover: #1a2a41;
+  --border: #233a52;
+  --border-muted: #30486a;
+  --primary: #5eb3ff;
+  --primary-hover: #3f9ef2;
+  --primary-foreground: #06111f;
+  --accent: #7dd3e0;
+  --muted: #9bb0c9;
+  --success: #5fc48d;
+  --warning: #e8b64f;
+  --danger: #ef6a6a;
+  --surface-glow: rgba(94, 179, 255, 0.1);
+  --nav-active: linear-gradient(90deg, #7dd3e0 0%, #5eb3ff 100%);
+  --overlay: rgba(4, 9, 17, 0.75);
 }
 
-/* "Studio Paper" — warm editorial light */
+/* "Skyline" — light blue mode */
 [data-theme="light"] {
-  --background: #faf6ef;
-  --foreground: #231f1a;
+  --background: #eef6ff;
+  --foreground: #10253f;
   --card: #ffffff;
-  --card-hover: #f5efe4;
-  --border: #e8ded0;
-  --border-muted: #d8cab3;
-  --primary: #c9791a;
-  --primary-hover: #a8630f;
+  --card-hover: #e3f0ff;
+  --border: #cfe3f7;
+  --border-muted: #b4d2ee;
+  --primary: #2f80ed;
+  --primary-hover: #1f68cc;
   --primary-foreground: #ffffff;
-  --accent: #3b5bdb;
-  --muted: #7d7265;
-  --success: #4f8a3f;
-  --warning: #b5541f;
-  --danger: #c62f2f;
-  --surface-glow: rgba(201, 121, 26, 0.08);
-  --nav-active: linear-gradient(90deg, #3b5bdb 0%, #c9791a 100%);
-  --overlay: rgba(35, 31, 26, 0.45);
+  --accent: #0ea5b7;
+  --muted: #5c7693;
+  --success: #2f9e62;
+  --warning: #c17d12;
+  --danger: #d1403f;
+  --surface-glow: rgba(47, 128, 237, 0.08);
+  --nav-active: linear-gradient(90deg, #0ea5b7 0%, #2f80ed 100%);
+  --overlay: rgba(16, 37, 63, 0.45);
 }
 
 @theme inline {
@@ -76,11 +76,13 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-input,
-textarea,
-select,
-button {
-  touch-action: manipulation;
+@layer base {
+  input,
+  textarea,
+  select,
+  button {
+    touch-action: manipulation;
+  }
 }
 
 select,

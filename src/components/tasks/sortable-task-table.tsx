@@ -472,6 +472,7 @@ function SortableDesktopRow(props: TaskRowProps) {
         <button
           type="button"
           className="flex h-full min-h-12 w-12 cursor-grab touch-none items-center justify-center border border-transparent text-muted hover:border-border hover:bg-background hover:text-primary active:cursor-grabbing active:border-primary/40 active:bg-primary/10 active:text-primary"
+          style={{ touchAction: "none" }}
           aria-label={`Reorder ${task.title}`}
           {...attributes}
           {...listeners}
@@ -543,6 +544,7 @@ function MobileCard({
     <button
       type="button"
       className="flex h-full w-12 shrink-0 cursor-grab touch-none items-center justify-center border-r border-border/60 text-muted hover:bg-background hover:text-primary active:cursor-grabbing active:bg-primary/10 active:text-primary"
+      style={{ touchAction: "none" }}
       aria-label={`Reorder ${task.title}`}
       {...sortableState.attributes}
       {...sortableState.listeners}

@@ -383,6 +383,7 @@ function SessionItemRow({
           <button
             type="button"
             className="inline-flex h-10 w-10 shrink-0 cursor-grab items-center justify-center rounded-md border border-transparent text-muted hover:border-border hover:bg-card hover:text-primary active:cursor-grabbing active:border-primary/40 active:bg-primary/10 active:text-primary touch-none"
+            style={{ touchAction: "none" }}
             aria-label={`Reorder ${node.title}`}
             {...sortableState.attributes}
             {...sortableState.listeners}

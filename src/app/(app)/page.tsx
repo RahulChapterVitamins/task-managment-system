@@ -30,7 +30,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="relative flex min-h-full min-w-0 flex-1 flex-col overflow-x-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(240,167,61,0.12),_transparent_42%),radial-gradient(circle_at_bottom,_rgba(138,166,255,0.1),_transparent_40%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(94,179,255,0.14),_transparent_42%),radial-gradient(circle_at_bottom,_rgba(125,211,224,0.1),_transparent_40%)]" />
 
       <DashboardHeader />
 
