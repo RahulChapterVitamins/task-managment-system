@@ -9,6 +9,7 @@ import { TaskStatusPieChart } from "@/components/monthly/task-status-pie-chart";
 import { DownloadAllTasksButton } from "@/components/monthly/download-all-tasks-button";
 import { getMonthlyDashboardData, type TaskListItem } from "@/lib/db/queries";
 import { getMonthlyEntries } from "@/lib/db/monthly";
+import { cn } from "@/lib/utils/cn";
 
 type MonthlyPageProps = {
   searchParams: Promise<{ month?: string }>;
@@ -50,14 +51,26 @@ export default async function MonthlyPage({ searchParams }: MonthlyPageProps) {
 
       <div className="flex flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8 animate-fade-in">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard title="Overall Progress">
+          <StatCard title="Overall Progress" tone="primary">
             <div className="motion-safe:transition-transform motion-safe:duration-300 motion-safe:hover:scale-105">
               <CircularProgress value={data.overallProgress} size={76} />
             </div>
           </StatCard>
-          <StatCard title="Tasks Completed" value={String(data.completed)} />
-          <StatCard title="Tasks Pending" value={String(data.pending)} />
-          <StatCard title="Overdue" value={String(data.overdue)} accent={data.overdue > 0} />
+          <StatCard
+            title="Tasks Completed"
+            value={String(data.completed)}
+            tone="success"
+          />
+          <StatCard
+            title="Tasks Pending"
+            value={String(data.pending)}
+            tone="warning"
+          />
+          <StatCard
+            title="Overdue"
+            value={String(data.overdue)}
+            tone={data.overdue > 0 ? "danger" : "neutral"}
+          />
         </div>
 
         <Card>
@@ -154,28 +167,45 @@ export default async function MonthlyPage({ searchParams }: MonthlyPageProps) {
   );
 }
 
+const STAT_TONE_STYLES: Record<string, string> = {
+  primary: "border-t-primary",
+  success: "border-t-success",
+  warning: "border-t-warning",
+  danger: "border-t-danger",
+  neutral: "border-t-border",
+};
+
+const STAT_TONE_TEXT: Record<string, string> = {
+  primary: "text-primary",
+  success: "text-success",
+  warning: "text-warning",
+  danger: "text-danger",
+  neutral: "text-foreground",
+};
+
 function StatCard({
   title,
   value,
-  accent,
+  tone = "neutral",
   children,
 }: {
   title: string;
   value?: string;
-  accent?: boolean;
+  tone?: "primary" | "success" | "warning" | "danger" | "neutral";
   children?: React.ReactNode;
 }) {
   return (
-    <Card className="motion-safe:transition-all motion-safe:duration-200 motion-safe:hover:-translate-y-0.5 motion-safe:hover:border-border-muted motion-safe:hover:shadow-lg">
+    <Card
+      className={cn(
+        "border-t-4 motion-safe:transition-all motion-safe:duration-200 motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-lg",
+        STAT_TONE_STYLES[tone]
+      )}
+    >
       <CardContent className="flex flex-col items-center justify-center py-6 text-center">
         <p className="text-sm text-muted">{title}</p>
         {children}
         {value !== undefined && (
-          <p
-            className={`mt-2 text-3xl font-bold ${
-              accent ? "text-danger" : "text-foreground"
-            }`}
-          >
+          <p className={cn("mt-2 text-3xl font-bold", STAT_TONE_TEXT[tone])}>
             {value}
           </p>
         )}

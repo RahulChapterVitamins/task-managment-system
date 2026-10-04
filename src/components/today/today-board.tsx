@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { Briefcase, History, Plus, Search, Target } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { Briefcase, Flame, History, Plus, Search, Target } from "lucide-react";
 import { SortableTaskTable } from "@/components/tasks/sortable-task-table";
 import { CopyTasksExcelButton } from "@/components/tasks/copy-tasks-excel-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CircularProgress } from "@/components/ui/circular-progress";
+import { ConfettiBurst } from "@/components/ui/confetti-burst";
 import {
   addTaskToTodayAction,
   carryOverYesterdayAction,
@@ -21,6 +22,7 @@ type TodayBoardProps = {
   date: string;
   todayTasks: TaskListItem[];
   availableTasks: TaskListItem[];
+  streak: number | null;
 };
 
 const TABS: { id: Workspace; label: string; icon: typeof Briefcase }[] = [
@@ -28,13 +30,19 @@ const TABS: { id: Workspace; label: string; icon: typeof Briefcase }[] = [
   { id: "personal", label: "Personal", icon: Target },
 ];
 
-export function TodayBoard({ date, todayTasks, availableTasks }: TodayBoardProps) {
+export function TodayBoard({
+  date,
+  todayTasks,
+  availableTasks,
+  streak,
+}: TodayBoardProps) {
   const [activeTab, setActiveTab] = useState<Workspace>("office");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [pending, startTransition] = useTransition();
   const [carryOverPending, startCarryOverTransition] = useTransition();
   const [carryOverMessage, setCarryOverMessage] = useState<string | null>(null);
+  const [celebrating, setCelebrating] = useState(false);
 
   const officeToday = useMemo(
     () => todayTasks.filter((task) => task.workspace === "office"),
@@ -51,6 +59,28 @@ export function TodayBoard({ date, todayTasks, availableTasks }: TodayBoardProps
   const totalCount = todayTasks.length;
   const todayProgress =
     totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
+
+  const previousDoneCountRef = useRef(doneCount);
+
+  useEffect(() => {
+    const previousDoneCount = previousDoneCountRef.current;
+    previousDoneCountRef.current = doneCount;
+
+    if (
+      totalCount > 0 &&
+      doneCount === totalCount &&
+      previousDoneCount < totalCount
+    ) {
+      setCelebrating(true);
+      const timeout = window.setTimeout(() => setCelebrating(false), 2200);
+      return () => window.clearTimeout(timeout);
+    }
+  }, [doneCount, totalCount]);
+
+  const displayStreak =
+    streak !== null && doneCount === totalCount && totalCount > 0
+      ? streak + 1
+      : streak;
 
   const filteredAvailable = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -97,19 +127,34 @@ export function TodayBoard({ date, todayTasks, availableTasks }: TodayBoardProps
 
   return (
     <div className="space-y-5">
+      <ConfettiBurst active={celebrating} />
+
       {totalCount > 0 && (
-        <div className="flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-4 sm:px-5">
+        <div
+          className={cn(
+            "flex flex-wrap items-center gap-4 rounded-xl border px-4 py-4 sm:px-5 motion-safe:transition-colors motion-safe:duration-500",
+            doneCount === totalCount
+              ? "border-success/40 bg-success/10"
+              : "border-border bg-card"
+          )}
+        >
           <CircularProgress value={todayProgress} size={64} strokeWidth={6} />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-foreground">
               {doneCount} of {totalCount} today&apos;s tasks done
             </p>
             <p className="mt-0.5 text-xs text-muted">
               {doneCount === totalCount
-                ? "All done for today — great work!"
+                ? "All done for today — great work! 🎉"
                 : `${totalCount - doneCount} left to go. Keep going!`}
             </p>
           </div>
+          {displayStreak !== null && displayStreak > 0 && (
+            <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-warning/30 bg-warning/10 px-3 py-1.5 text-xs font-semibold text-warning">
+              <Flame className="h-3.5 w-3.5" />
+              {displayStreak} day{displayStreak === 1 ? "" : "s"} streak
+            </div>
+          )}
         </div>
       )}
 

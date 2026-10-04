@@ -157,3 +157,82 @@ export async function getNextDailySortOrder(
 
   return maxOrder + 1;
 }
+
+const STREAK_LOOKBACK_DAYS = 30;
+
+function shiftDateString(date: string, days: number): string {
+  const d = new Date(`${date}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Counts consecutive prior days (not including `today`) where every task
+ * picked for that day currently has status "done". Best-effort: it reads
+ * current task status, not a historical snapshot, so reopening an old task
+ * will retroactively break the streak.
+ */
+export async function getTodayStreak(today: string): Promise<number> {
+  const supabase = await createClient();
+  const todayDate = normalizeDate(today);
+  const sinceDate = shiftDateString(todayDate, -STREAK_LOOKBACK_DAYS);
+
+  const priorityResult = await supabase
+    .from("daily_priorities")
+    .select("priority_date, task_id")
+    .gte("priority_date", sinceDate)
+    .lt("priority_date", todayDate);
+
+  if (priorityResult.error) {
+    throw new Error(`getTodayStreak: ${priorityResult.error.message}`);
+  }
+
+  const rows = priorityResult.data ?? [];
+
+  if (rows.length === 0) {
+    return 0;
+  }
+
+  const taskIds = [...new Set(rows.map((row) => row.task_id))];
+  const tasksResult = await supabase
+    .from("tasks")
+    .select("id, status")
+    .in("id", taskIds);
+
+  if (tasksResult.error) {
+    throw new Error(`getTodayStreak: ${tasksResult.error.message}`);
+  }
+
+  const statusById = new Map(
+    (tasksResult.data ?? []).map((task) => [task.id, task.status])
+  );
+
+  const taskIdsByDate = new Map<string, string[]>();
+  for (const row of rows) {
+    const list = taskIdsByDate.get(row.priority_date) ?? [];
+    list.push(row.task_id);
+    taskIdsByDate.set(row.priority_date, list);
+  }
+
+  let streak = 0;
+  let cursor = shiftDateString(todayDate, -1);
+
+  while (true) {
+    const idsForDay = taskIdsByDate.get(cursor);
+
+    if (!idsForDay || idsForDay.length === 0) {
+      break;
+    }
+
+    const allDone = idsForDay.every((id) => statusById.get(id) === "done");
+
+    if (!allDone) {
+      break;
+    }
+
+    streak += 1;
+    cursor = shiftDateString(cursor, -1);
+  }
+
+  return streak;
+}

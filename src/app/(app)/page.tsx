@@ -36,7 +36,7 @@ export default async function DashboardPage() {
 
       <div className="relative z-10 flex min-w-0 flex-1 flex-col px-4 py-5 sm:px-8 sm:py-8">
         <div className="mx-auto w-full max-w-5xl min-w-0 text-center">
-          <p className="text-sm text-muted">Welcome back,</p>
+          <p className="text-sm text-muted">{getGreeting()},</p>
           <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight text-foreground sm:mt-2 sm:text-5xl">
             {firstName}
           </h1>
@@ -107,6 +107,20 @@ function QuickLinks() {
       ))}
     </div>
   );
+}
+
+function getGreeting() {
+  const hour = new Date().getHours();
+
+  if (hour < 12) {
+    return "Good morning";
+  }
+
+  if (hour < 18) {
+    return "Good afternoon";
+  }
+
+  return "Good evening";
 }
 
 function formatFirstName(email?: string | null) {

@@ -4,6 +4,7 @@ import {
   getAvailableTasksForToday,
   getTodayTasksWithProgress,
 } from "@/lib/db/queries";
+import { getTodayStreak } from "@/lib/db/daily";
 
 type TodayPageProps = {
   searchParams: Promise<{ date?: string }>;
@@ -20,10 +21,12 @@ function resolveDate(input?: string) {
 export default async function TodayPage({ searchParams }: TodayPageProps) {
   const params = await searchParams;
   const date = resolveDate(params.date);
+  const isRealToday = date === resolveDate();
 
-  const [todayTasks, availableTasks] = await Promise.all([
+  const [todayTasks, availableTasks, streak] = await Promise.all([
     getTodayTasksWithProgress(date),
     getAvailableTasksForToday(date),
+    isRealToday ? getTodayStreak(date) : Promise.resolve(0),
   ]);
 
   const label = new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
@@ -61,6 +64,7 @@ export default async function TodayPage({ searchParams }: TodayPageProps) {
           date={date}
           todayTasks={todayTasks}
           availableTasks={availableTasks}
+          streak={isRealToday ? streak : null}
         />
       </div>
     </>

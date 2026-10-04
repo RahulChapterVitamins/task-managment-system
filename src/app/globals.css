@@ -153,6 +153,17 @@ textarea {
       transform: scale(1);
     }
   }
+
+  @keyframes confetti-fall {
+    0% {
+      transform: translateY(-10vh) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(540deg);
+      opacity: 0;
+    }
+  }
 }
 
 .animate-fade-in {
@@ -175,6 +186,10 @@ textarea {
   animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
+.animate-confetti-fall {
+  animation: confetti-fall 1.4s linear both;
+}
+
 .nav-active-pill {
   background: var(--nav-active);
   color: #0b0b0c;
@@ -189,7 +204,8 @@ textarea {
   .animate-scale-in,
   .animate-modal-in,
   .animate-slide-in-right,
-  .animate-pop-in {
+  .animate-pop-in,
+  .animate-confetti-fall {
     animation: none;
   }
 }
