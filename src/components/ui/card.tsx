@@ -14,7 +14,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border bg-card shadow-lg shadow-black/20",
+        "rounded-2xl border border-border bg-card shadow-sm shadow-black/5",
         interactive && motion.card,
         className
       )}
@@ -36,7 +36,10 @@ export function CardTitle({
 }: HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={cn("text-lg font-semibold text-foreground", className)}
+      className={cn(
+        "font-display text-lg font-semibold tracking-tight text-foreground",
+        className
+      )}
       {...props}
     />
   );

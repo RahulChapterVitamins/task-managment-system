@@ -68,7 +68,10 @@ export function Modal({
       >
         <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-4 sm:px-5">
           <div className="min-w-0">
-            <h2 id="modal-title" className="text-base font-semibold text-foreground sm:text-lg">
+            <h2
+              id="modal-title"
+              className="font-display text-base font-semibold tracking-tight text-foreground sm:text-lg"
+            >
               {title}
             </h2>
             {description && (

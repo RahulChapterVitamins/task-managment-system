@@ -63,7 +63,7 @@ export function AppShellClient({ userEmail, children }: AppShellClientProps) {
             >
               {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
-            <Link href="/" className="flex-1 text-sm font-semibold text-primary">
+            <Link href="/" className="flex-1 font-display text-base font-semibold tracking-tight text-primary">
               TaskFlow
             </Link>
             <ThemeToggle compact />

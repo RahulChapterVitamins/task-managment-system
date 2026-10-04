@@ -30,14 +30,14 @@ export default async function DashboardPage() {
 
   return (
     <div className="relative flex min-h-full min-w-0 flex-1 flex-col overflow-x-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(182,255,51,0.12),_transparent_42%),radial-gradient(circle_at_bottom,_rgba(45,212,191,0.1),_transparent_40%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(240,167,61,0.12),_transparent_42%),radial-gradient(circle_at_bottom,_rgba(138,166,255,0.1),_transparent_40%)]" />
 
       <DashboardHeader />
 
       <div className="relative z-10 flex min-w-0 flex-1 flex-col px-4 py-5 sm:px-8 sm:py-8">
         <div className="mx-auto w-full max-w-5xl min-w-0 text-center">
           <p className="text-sm text-muted">Welcome back,</p>
-          <h1 className="mt-1 text-2xl font-bold text-foreground sm:mt-2 sm:text-4xl">
+          <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight text-foreground sm:mt-2 sm:text-5xl">
             {firstName}
           </h1>
           <p className="mt-2 text-sm text-muted">
@@ -152,7 +152,7 @@ function WorkspaceCard({
           {emoji}
         </span>
         <div className="min-w-0">
-          <h2 className="truncate text-lg font-bold uppercase tracking-wide text-foreground sm:text-2xl">
+          <h2 className="truncate font-display text-lg font-semibold tracking-tight text-foreground sm:text-2xl">
             {title}
           </h2>
           <p className="mt-0.5 truncate text-xs text-muted sm:mt-1 sm:text-sm">

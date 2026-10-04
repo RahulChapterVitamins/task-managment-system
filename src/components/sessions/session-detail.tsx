@@ -236,7 +236,7 @@ function SortableItemList({
   }, [initialNodes]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -382,16 +382,16 @@ function SessionItemRow({
         {sortable ? (
           <button
             type="button"
-            className="inline-flex h-7 w-7 shrink-0 cursor-grab items-center justify-center rounded-md text-muted hover:bg-card"
+            className="inline-flex h-10 w-10 shrink-0 cursor-grab items-center justify-center rounded-md border border-transparent text-muted hover:border-border hover:bg-card hover:text-primary active:cursor-grabbing active:border-primary/40 active:bg-primary/10 active:text-primary touch-manipulation"
             aria-label={`Reorder ${node.title}`}
             {...sortableState.attributes}
             {...sortableState.listeners}
           >
-            <GripVertical className="h-3.5 w-3.5" />
+            <GripVertical className="h-4 w-4" />
           </button>
         ) : (
-          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-muted">
-            <GripVertical className="h-3.5 w-3.5 opacity-40" />
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center text-muted">
+            <GripVertical className="h-4 w-4 opacity-40" />
           </span>
         )}
 

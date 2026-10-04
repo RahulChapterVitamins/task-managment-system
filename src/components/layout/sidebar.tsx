@@ -21,7 +21,7 @@ export function Sidebar({ userEmail, onNavigate }: SidebarProps) {
     <aside className="flex h-full w-full flex-col overflow-hidden border-r border-border bg-card">
       <div className="shrink-0 border-b border-border px-4 py-5">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
+          <p className="font-display text-lg font-semibold tracking-tight text-primary">
             TaskFlow
           </p>
           <ThemeToggle compact />

@@ -1,45 +1,46 @@
 @import "tailwindcss";
 
-/* Holo-inspired dark (default) */
+/* "Studio Ink" — warm editorial dark (default) */
 :root,
 [data-theme="dark"] {
-  --background: #0b0b0c;
-  --foreground: #f5f5f5;
-  --card: #141416;
-  --card-hover: #1c1c1f;
-  --border: #2a2a2e;
-  --border-muted: #3a3a40;
-  --primary: #b6ff33;
-  --primary-hover: #a3e82e;
-  --primary-foreground: #0b0b0c;
-  --accent: #5eead4;
-  --muted: #9ca3af;
-  --success: #34d399;
-  --warning: #fbbf24;
-  --danger: #f87171;
-  --surface-glow: rgba(182, 255, 51, 0.08);
-  --nav-active: linear-gradient(90deg, #2dd4bf 0%, #b6ff33 100%);
-  --overlay: rgba(0, 0, 0, 0.72);
+  --background: #121210;
+  --foreground: #f7f4ee;
+  --card: #1c1a17;
+  --card-hover: #252220;
+  --border: #332e28;
+  --border-muted: #46403a;
+  --primary: #f0a73d;
+  --primary-hover: #e2952a;
+  --primary-foreground: #1a1308;
+  --accent: #8aa6ff;
+  --muted: #a89f92;
+  --success: #7bbf6a;
+  --warning: #d97748;
+  --danger: #e2574c;
+  --surface-glow: rgba(240, 167, 61, 0.1);
+  --nav-active: linear-gradient(90deg, #8aa6ff 0%, #f0a73d 100%);
+  --overlay: rgba(10, 8, 6, 0.75);
 }
 
+/* "Studio Paper" — warm editorial light */
 [data-theme="light"] {
-  --background: #f4f5f7;
-  --foreground: #111827;
+  --background: #faf6ef;
+  --foreground: #231f1a;
   --card: #ffffff;
-  --card-hover: #f9fafb;
-  --border: #e5e7eb;
-  --border-muted: #d1d5db;
-  --primary: #65a30d;
-  --primary-hover: #4d7c0f;
+  --card-hover: #f5efe4;
+  --border: #e8ded0;
+  --border-muted: #d8cab3;
+  --primary: #c9791a;
+  --primary-hover: #a8630f;
   --primary-foreground: #ffffff;
-  --accent: #0d9488;
-  --muted: #6b7280;
-  --success: #059669;
-  --warning: #d97706;
-  --danger: #dc2626;
-  --surface-glow: rgba(101, 163, 13, 0.06);
-  --nav-active: linear-gradient(90deg, #14b8a6 0%, #65a30d 100%);
-  --overlay: rgba(15, 23, 42, 0.45);
+  --accent: #3b5bdb;
+  --muted: #7d7265;
+  --success: #4f8a3f;
+  --warning: #b5541f;
+  --danger: #c62f2f;
+  --surface-glow: rgba(201, 121, 26, 0.08);
+  --nav-active: linear-gradient(90deg, #3b5bdb 0%, #c9791a 100%);
+  --overlay: rgba(35, 31, 26, 0.45);
 }
 
 @theme inline {
@@ -59,6 +60,7 @@
   --color-danger: var(--danger);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-fraunces);
 }
 
 html,
