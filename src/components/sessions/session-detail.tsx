@@ -263,14 +263,14 @@ function ChildrenPanel({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[150] flex justify-start">
+    <div className="fixed inset-0 z-[150] flex justify-end">
       <button
         type="button"
         aria-label="Close child tasks"
         className="absolute inset-0 bg-[var(--overlay)] backdrop-blur-[2px] animate-fade-in"
         onClick={onClose}
       />
-      <div className="relative flex h-full w-full flex-col overflow-hidden border-r border-border bg-background shadow-2xl animate-slide-in-left sm:max-w-md lg:max-w-lg">
+      <div className="relative flex h-full w-full flex-col overflow-hidden border-l border-border bg-background shadow-2xl animate-slide-in-right sm:max-w-md lg:max-w-lg">
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-card/60 px-4 py-3">
           <div className="flex min-w-0 items-center gap-2">
             {chain.length > 1 && (

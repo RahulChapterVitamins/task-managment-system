@@ -1,20 +1,16 @@
 import { notFound } from "next/navigation";
 import { getTaskDetail } from "@/lib/db/queries";
-import { TaskDetailView } from "@/components/tasks/task-detail-view";
 import { TaskDetailModal } from "@/components/tasks/task-detail-modal";
-import { isWorkspace } from "@/lib/utils/workspace";
+import { TaskDetailView } from "@/components/tasks/task-detail-view";
+import type { Workspace } from "@/lib/types/app";
 
-export default async function TaskDetailInterceptedPage({
-  params,
+export async function TaskDetailInterceptedContent({
+  workspace,
+  taskId,
 }: {
-  params: Promise<{ workspace: string; taskId: string }>;
+  workspace: Workspace;
+  taskId: string;
 }) {
-  const { workspace, taskId } = await params;
-
-  if (!isWorkspace(workspace)) {
-    notFound();
-  }
-
   const detail = await getTaskDetail(taskId);
 
   if (!detail || detail.task.workspace !== workspace) {
