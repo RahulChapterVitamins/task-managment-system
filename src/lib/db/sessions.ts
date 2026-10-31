@@ -285,6 +285,57 @@ function collectDescendants(
   }
 }
 
+/**
+ * After a session item's status changes, walk up its ancestor chain and set
+ * each ancestor to "done" when every one of its direct children is done, or
+ * back to "pending" otherwise. Stops at the first ancestor whose status
+ * doesn't need to change (nothing above it can change either).
+ */
+export async function recalcAncestorStatuses(
+  sessionId: string,
+  startParentId: string | null
+): Promise<void> {
+  if (!startParentId) {
+    return;
+  }
+
+  const supabase = await createClient();
+  const items = await getSessionItems(sessionId);
+  const itemsById = new Map(items.map((item) => [item.id, item]));
+
+  let currentParentId: string | null = startParentId;
+
+  while (currentParentId) {
+    const parent = itemsById.get(currentParentId);
+    if (!parent) {
+      break;
+    }
+
+    const children = items.filter((item) => item.parent_item_id === currentParentId);
+    if (children.length === 0) {
+      break;
+    }
+
+    const nextStatus = children.every((child) => child.status === "done")
+      ? "done"
+      : "pending";
+
+    if (parent.status === nextStatus) {
+      break;
+    }
+
+    const result = await supabase
+      .from("session_items")
+      .update({ status: nextStatus })
+      .eq("id", parent.id);
+
+    assertNoError("recalcAncestorStatuses", { data: null, error: result.error });
+
+    parent.status = nextStatus;
+    currentParentId = parent.parent_item_id;
+  }
+}
+
 export function buildSessionItemTree(items: SessionItem[]): SessionItemNode[] {
   const map = new Map<string, SessionItemNode>();
 

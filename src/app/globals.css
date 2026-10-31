@@ -140,6 +140,30 @@ textarea {
     }
   }
 
+  @keyframes slide-in-left {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes emoji-pop {
+    0% {
+      transform: translate(0, 0) scale(0.5);
+      opacity: 0;
+    }
+    30% {
+      transform: translate(calc(var(--emoji-drift, 0px) * 0.3), -14px) scale(1.15);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(var(--emoji-drift, 0px), -46px) scale(0.9);
+      opacity: 0;
+    }
+  }
+
   @keyframes pop-in {
     0% {
       transform: scale(0.85);
@@ -182,6 +206,14 @@ textarea {
   animation: slide-in-right 0.28s cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
+.animate-slide-in-left {
+  animation: slide-in-left 0.28s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.animate-emoji-pop {
+  animation: emoji-pop 0.9s ease-out both;
+}
+
 .animate-pop-in {
   animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
@@ -204,8 +236,10 @@ textarea {
   .animate-scale-in,
   .animate-modal-in,
   .animate-slide-in-right,
+  .animate-slide-in-left,
   .animate-pop-in,
-  .animate-confetti-fall {
+  .animate-confetti-fall,
+  .animate-emoji-pop {
     animation: none;
   }
 }

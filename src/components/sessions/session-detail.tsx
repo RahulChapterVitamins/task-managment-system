@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -29,13 +30,15 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   Briefcase,
-  ChevronDown,
+  CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   GripVertical,
   Link2,
   Plus,
   Target,
   Trash2,
+  X,
 } from "lucide-react";
 import {
   addLinkedSubtaskAction,
@@ -47,6 +50,8 @@ import {
   toggleSessionItemAction,
 } from "@/lib/sessions/actions";
 import { Button } from "@/components/ui/button";
+import { ConfettiBurst } from "@/components/ui/confetti-burst";
+import { EmojiPop } from "@/components/ui/emoji-pop";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -167,9 +172,30 @@ function SessionItemTree({
   nodes: SessionItemNode[];
   pickableSubtasks: PickableSubtask[];
 }) {
-  const [expanded, setExpanded] = useState<Set<string>>(() =>
-    collectParentIds(nodes)
-  );
+  const [panelPath, setPanelPath] = useState<string[]>([]);
+
+  function openChildren(id: string) {
+    setPanelPath((path) => [...path, id]);
+  }
+
+  function goBack() {
+    setPanelPath((path) => path.slice(0, -1));
+  }
+
+  function closePanel() {
+    setPanelPath([]);
+  }
+
+  const chain: SessionItemNode[] = [];
+  let pool = nodes;
+  for (const id of panelPath) {
+    const found = pool.find((node) => node.id === id);
+    if (!found) {
+      break;
+    }
+    chain.push(found);
+    pool = found.children;
+  }
 
   if (nodes.length === 0) {
     return (
@@ -180,52 +206,186 @@ function SessionItemTree({
   }
 
   return (
-    <SortableItemList
-      nodes={nodes}
-      depth={0}
-      parentItemId={null}
-      sessionId={sessionId}
-      expanded={expanded}
-      setExpanded={setExpanded}
-      pickableSubtasks={pickableSubtasks}
-    />
+    <>
+      <SortableItemList
+        nodes={nodes}
+        sessionId={sessionId}
+        pickableSubtasks={pickableSubtasks}
+        onOpenChildren={openChildren}
+      />
+
+      {chain.length > 0 && (
+        <ChildrenPanel
+          chain={chain}
+          sessionId={sessionId}
+          pickableSubtasks={pickableSubtasks}
+          onOpenChildren={openChildren}
+          onBack={goBack}
+          onClose={closePanel}
+        />
+      )}
+    </>
   );
 }
 
-function collectParentIds(nodes: SessionItemNode[]): Set<string> {
-  const ids = new Set<string>();
-  function walk(items: SessionItemNode[]) {
-    for (const item of items) {
-      if (item.children.length > 0) {
-        ids.add(item.id);
-        walk(item.children);
+function ChildrenPanel({
+  chain,
+  sessionId,
+  pickableSubtasks,
+  onOpenChildren,
+  onBack,
+  onClose,
+}: {
+  chain: SessionItemNode[];
+  sessionId: string;
+  pickableSubtasks: PickableSubtask[];
+  onOpenChildren: (id: string) => void;
+  onBack: () => void;
+  onClose: () => void;
+}) {
+  const current = chain[chain.length - 1];
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
       }
     }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-[150] flex justify-start">
+      <button
+        type="button"
+        aria-label="Close child tasks"
+        className="absolute inset-0 bg-[var(--overlay)] backdrop-blur-[2px] animate-fade-in"
+        onClick={onClose}
+      />
+      <div className="relative flex h-full w-full flex-col overflow-hidden border-r border-border bg-background shadow-2xl animate-slide-in-left sm:max-w-md lg:max-w-lg">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-card/60 px-4 py-3">
+          <div className="flex min-w-0 items-center gap-2">
+            {chain.length > 1 && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-muted hover:bg-card-hover hover:text-foreground"
+                aria-label="Back"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-foreground">
+                {current.title}
+              </p>
+              <p className="truncate text-xs text-muted">
+                {chain.map((node) => node.title).join(" / ")}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border text-muted hover:bg-card-hover hover:text-foreground"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
+          {current.children.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-border bg-card/50 px-4 py-8 text-center text-sm text-muted">
+              No child tasks yet.
+            </p>
+          ) : (
+            <SortableItemList
+              nodes={current.children}
+              sessionId={sessionId}
+              pickableSubtasks={pickableSubtasks}
+              onOpenChildren={onOpenChildren}
+            />
+          )}
+
+          <QuickAddChild sessionId={sessionId} parentItemId={current.id} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function QuickAddChild({
+  sessionId,
+  parentItemId,
+}: {
+  sessionId: string;
+  parentItemId: string;
+}) {
+  const [title, setTitle] = useState("");
+  const [pending, startTransition] = useTransition();
+
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    const trimmed = title.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.set("title", trimmed);
+    formData.set("parent_item_id", parentItemId);
+    setTitle("");
+
+    startTransition(async () => {
+      await addSessionItemAction(sessionId, formData);
+    });
   }
-  walk(nodes);
-  return ids;
+
+  return (
+    <form onSubmit={handleSubmit} className="flex gap-2">
+      <Input
+        value={title}
+        onChange={(event) => setTitle(event.target.value)}
+        placeholder="Add a child task..."
+        enterKeyHint="done"
+      />
+      <Button
+        type="submit"
+        size="sm"
+        disabled={pending || !title.trim()}
+        className="shrink-0 gap-1.5"
+      >
+        <Plus className="h-4 w-4" />
+        Add
+      </Button>
+    </form>
+  );
 }
 
 function SortableItemList({
   nodes: initialNodes,
-  depth,
-  parentItemId,
   sessionId,
-  expanded,
-  setExpanded,
   pickableSubtasks,
+  onOpenChildren,
 }: {
   nodes: SessionItemNode[];
-  depth: number;
-  parentItemId: string | null;
   sessionId: string;
-  expanded: Set<string>;
-  setExpanded: React.Dispatch<React.SetStateAction<Set<string>>>;
   pickableSubtasks: PickableSubtask[];
+  onOpenChildren: (id: string) => void;
 }) {
   const [nodes, setNodes] = useState(initialNodes);
   const [mounted, setMounted] = useState(false);
   const [pending, startTransition] = useTransition();
+  const listId = useId();
 
   useEffect(() => {
     setMounted(true);
@@ -269,12 +429,10 @@ function SortableItemList({
       key={node.id}
       node={node}
       priority={index + 1}
-      depth={depth}
       sessionId={sessionId}
-      expanded={expanded}
-      setExpanded={setExpanded}
       sortable={mounted}
       pickableSubtasks={pickableSubtasks}
+      onOpenChildren={onOpenChildren}
     />
   ));
 
@@ -282,7 +440,7 @@ function SortableItemList({
     <ul className={cn("space-y-1", pending && "opacity-70")}>
       {mounted ? (
         <DndContext
-          id={`${sessionId}-${parentItemId ?? "root"}`}
+          id={listId}
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
@@ -304,40 +462,40 @@ function SortableItemList({
 function SessionItemRow({
   node,
   priority,
-  depth,
   sessionId,
-  expanded,
-  setExpanded,
   sortable,
   pickableSubtasks,
+  onOpenChildren,
 }: {
   node: SessionItemNode;
   priority: number;
-  depth: number;
   sessionId: string;
-  expanded: Set<string>;
-  setExpanded: React.Dispatch<React.SetStateAction<Set<string>>>;
   sortable: boolean;
   pickableSubtasks: PickableSubtask[];
+  onOpenChildren: (id: string) => void;
 }) {
   const [pending, startTransition] = useTransition();
   const [addOpen, setAddOpen] = useState(false);
   const isParent = node.children.length > 0;
-  const isExpanded = expanded.has(node.id);
   const isDone = node.status === "done";
   const sortableState = useSortable({ id: node.id, disabled: !sortable });
 
-  function toggleExpanded() {
-    setExpanded((current) => {
-      const next = new Set(current);
-      if (next.has(node.id)) {
-        next.delete(node.id);
-      } else {
-        next.add(node.id);
-      }
-      return next;
-    });
-  }
+  const [celebrating, setCelebrating] = useState(false);
+  const previousDoneRef = useRef(isDone);
+
+  useEffect(() => {
+    const wasDone = previousDoneRef.current;
+    previousDoneRef.current = isDone;
+
+    if (isDone && !wasDone) {
+      setCelebrating(true);
+      const timeout = window.setTimeout(
+        () => setCelebrating(false),
+        isParent ? 2200 : 900
+      );
+      return () => window.clearTimeout(timeout);
+    }
+  }, [isDone, isParent]);
 
   function handleToggle() {
     startTransition(async () => {
@@ -370,15 +528,22 @@ function SessionItemRow({
     >
       <div
         className={cn(
-          "group flex items-center gap-2 rounded-lg border border-transparent py-2 pr-2",
+          "group relative flex items-center gap-2 rounded-lg border border-transparent py-2 pr-2",
           motion.row,
           pending && "opacity-60",
+          isParent && isDone && "border-success/30 bg-success/5",
           sortable &&
             sortableState.isDragging &&
             "relative z-10 border-border bg-card shadow-md"
         )}
-        style={{ paddingLeft: `${depth * 14 + 4}px` }}
       >
+        {celebrating &&
+          (isParent ? (
+            <ConfettiBurst active count={28} />
+          ) : (
+            <EmojiPop active />
+          ))}
+
         {sortable ? (
           <button
             type="button"
@@ -403,12 +568,12 @@ function SessionItemRow({
         {isParent ? (
           <button
             type="button"
-            onClick={toggleExpanded}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted hover:bg-card"
-            aria-label={isExpanded ? "Collapse" : "Expand"}
+            onClick={() => onOpenChildren(node.id)}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted hover:bg-card hover:text-foreground sm:h-7 sm:w-7"
+            aria-label={`View child tasks for ${node.title}`}
           >
-            {isExpanded ? (
-              <ChevronDown className="h-4 w-4" />
+            {isDone ? (
+              <CheckCircle2 className="h-4 w-4 text-success" />
             ) : (
               <ChevronRight className="h-4 w-4" />
             )}
@@ -425,20 +590,32 @@ function SessionItemRow({
           </label>
         )}
 
-        <div className="min-w-0 flex-1">
+        <div
+          className="min-w-0 flex-1"
+          onClick={isParent ? () => onOpenChildren(node.id) : undefined}
+          role={isParent ? "button" : undefined}
+        >
           <span
             className={cn(
               "block text-sm",
+              isParent && "cursor-pointer",
               isDone && "text-muted line-through decoration-muted"
             )}
           >
             {node.title}
           </span>
-          {node.linked_subtask_id && (
-            <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-accent">
-              <Link2 className="h-3 w-3" />
-              Synced with main task
+          {isParent ? (
+            <span className="mt-0.5 inline-block text-[11px] text-muted">
+              {node.children.filter((child) => child.status === "done").length}/
+              {node.children.length} child tasks done
             </span>
+          ) : (
+            node.linked_subtask_id && (
+              <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-accent">
+                <Link2 className="h-3 w-3" />
+                Synced with main task
+              </span>
+            )
           )}
         </div>
 
@@ -477,18 +654,6 @@ function SessionItemRow({
         pickableSubtasks={pickableSubtasks}
         title="Add child item"
       />
-
-      {isParent && isExpanded && (
-        <SortableItemList
-          nodes={node.children}
-          depth={depth + 1}
-          parentItemId={node.id}
-          sessionId={sessionId}
-          expanded={expanded}
-          setExpanded={setExpanded}
-          pickableSubtasks={pickableSubtasks}
-        />
-      )}
     </li>
   );
 }

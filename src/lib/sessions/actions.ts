@@ -10,6 +10,7 @@ import {
   deleteSessionItem,
   getSessionItems,
   moveUnfinishedItems,
+  recalcAncestorStatuses,
   reorderSessionItems,
   reorderSessions,
   updateSession,
@@ -158,7 +159,7 @@ export async function toggleSessionItemAction(
 ) {
   try {
     const nextStatus = currentStatus === "done" ? "pending" : "done";
-    await updateSessionItem(itemId, { status: nextStatus });
+    const updated = await updateSessionItem(itemId, { status: nextStatus });
 
     if (linkedSubtaskId) {
       await updateSubtask(linkedSubtaskId, {
@@ -168,6 +169,8 @@ export async function toggleSessionItemAction(
       revalidatePath("/office");
       revalidatePath("/personal");
     }
+
+    await recalcAncestorStatuses(sessionId, updated.parent_item_id);
 
     revalidateSessions(sessionId);
   } catch (error) {
