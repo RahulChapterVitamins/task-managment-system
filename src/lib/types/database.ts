@@ -219,6 +219,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      session_linked_tasks: {
+        Row: {
+          session_id: string;
+          task_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          session_id: string;
+          task_id: string;
+          user_id?: string;
+          created_at?: string;
+        };
+        Update: {
+          session_id?: string;
+          task_id?: string;
+          user_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       session_items: {
         Row: {
           id: string;
@@ -282,3 +303,4 @@ export type MonthlyEntry = Tables<"monthly_entries">;
 export type DailyPriority = Tables<"daily_priorities">;
 export type Session = Tables<"sessions">;
 export type SessionItem = Tables<"session_items">;
+export type SessionLinkedTask = Tables<"session_linked_tasks">;

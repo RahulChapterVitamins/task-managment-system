@@ -7,6 +7,7 @@ import {
 import { getTasks } from "@/lib/db/tasks";
 import {
   calculateSessionProgress,
+  getLinkedTasksBySessionIds,
   getSessionItemsBySessionIds,
   getSessions,
 } from "@/lib/db/sessions";
@@ -19,8 +20,11 @@ export default async function SessionsPage() {
   ]);
 
   const allTasks = [...officeTasks, ...personalTasks];
-  const taskMap = new Map(allTasks.map((task) => [task.id, task]));
-  const items = await getSessionItemsBySessionIds(sessions.map((session) => session.id));
+  const sessionIds = sessions.map((session) => session.id);
+  const [items, linkedTasksBySession] = await Promise.all([
+    getSessionItemsBySessionIds(sessionIds),
+    getLinkedTasksBySessionIds(sessionIds),
+  ]);
 
   const itemsBySession = new Map<string, typeof items>();
   for (const item of items) {
@@ -44,9 +48,9 @@ export default async function SessionsPage() {
       progress: calculateSessionProgress(sessionItems),
       itemCount: countable.length,
       doneCount,
-      linkedTaskTitle: session.linked_task_id
-        ? taskMap.get(session.linked_task_id)?.title ?? null
-        : null,
+      linkedTaskTitles: (linkedTasksBySession.get(session.id) ?? []).map(
+        (task) => task.title
+      ),
       createdAt: session.created_at,
     };
   });

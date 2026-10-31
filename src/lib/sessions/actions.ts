@@ -13,6 +13,7 @@ import {
   recalcAncestorStatuses,
   reorderSessionItems,
   reorderSessions,
+  setSessionLinkedTasks,
   updateSession,
   updateSessionItem,
 } from "@/lib/db/sessions";
@@ -35,7 +36,10 @@ export async function createSessionAction(
   formData: FormData
 ): Promise<SessionActionState> {
   const title = String(formData.get("title") ?? "").trim();
-  const linkedTaskId = String(formData.get("linked_task_id") ?? "").trim();
+  const linkedTaskIds = formData
+    .getAll("linked_task_ids")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
   const carryFromId = String(formData.get("carry_from_session_id") ?? "").trim();
 
   if (!title) {
@@ -45,10 +49,11 @@ export async function createSessionAction(
   let session;
 
   try {
-    session = await createSession({
-      title,
-      linked_task_id: linkedTaskId || null,
-    });
+    session = await createSession({ title });
+
+    if (linkedTaskIds.length > 0) {
+      await setSessionLinkedTasks(session.id, linkedTaskIds);
+    }
 
     if (carryFromId) {
       await moveUnfinishedItems(carryFromId, session.id);

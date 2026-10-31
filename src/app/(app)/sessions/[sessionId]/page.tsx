@@ -4,7 +4,6 @@ import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SessionDetail } from "@/components/sessions/session-detail";
 import { Button } from "@/components/ui/button";
-import { getTask } from "@/lib/db/tasks";
 import { getTasks } from "@/lib/db/tasks";
 import { getSubtasksByTaskIds } from "@/lib/db/subtasks";
 import {
@@ -12,6 +11,7 @@ import {
   calculateSessionProgress,
   getSession,
   getSessionItems,
+  getSessionLinkedTasks,
 } from "@/lib/db/sessions";
 
 type SessionPageProps = {
@@ -26,16 +26,17 @@ export default async function SessionPage({ params }: SessionPageProps) {
     notFound();
   }
 
-  const [items, officeTasks, personalTasks, linkedTask] = await Promise.all([
+  const [items, officeTasks, personalTasks, linkedTasks] = await Promise.all([
     getSessionItems(sessionId),
     getTasks("office"),
     getTasks("personal"),
-    session.linked_task_id ? getTask(session.linked_task_id) : Promise.resolve(null),
+    getSessionLinkedTasks(sessionId),
   ]);
 
-  const allTasks = linkedTask
-    ? [linkedTask]
-    : [...officeTasks, ...personalTasks].filter((task) => task.status !== "done");
+  const allTasks =
+    linkedTasks.length > 0
+      ? linkedTasks
+      : [...officeTasks, ...personalTasks].filter((task) => task.status !== "done");
   const subtasks = await getSubtasksByTaskIds(allTasks.map((task) => task.id));
   const taskMap = new Map(allTasks.map((task) => [task.id, task]));
 
@@ -64,6 +65,7 @@ export default async function SessionPage({ params }: SessionPageProps) {
         depth,
         taskTitle: task?.title ?? "Task",
         workspace: task?.workspace ?? "office",
+        category: task?.category ?? null,
       };
     })
     .filter((item) => taskMap.has(item.task_id));
@@ -95,7 +97,7 @@ export default async function SessionPage({ params }: SessionPageProps) {
           session={session}
           tree={tree}
           progress={progress}
-          linkedTask={linkedTask}
+          linkedTasks={linkedTasks}
           pickableSubtasks={pickableSubtasks}
         />
       </div>

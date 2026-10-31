@@ -35,7 +35,7 @@ export type SessionListItem = {
   progress: number;
   itemCount: number;
   doneCount: number;
-  linkedTaskTitle: string | null;
+  linkedTaskTitles: string[];
   createdAt: string;
 };
 
@@ -200,8 +200,12 @@ function SessionCard({
                 {session.status === "done" ? "Completed" : "Active"}
                 {" · "}
                 {session.doneCount}/{session.itemCount} items
-                {session.linkedTaskTitle
-                  ? ` · Linked: ${session.linkedTaskTitle}`
+                {session.linkedTaskTitles.length > 0
+                  ? ` · Linked: ${session.linkedTaskTitles.slice(0, 2).join(", ")}${
+                      session.linkedTaskTitles.length > 2
+                        ? ` +${session.linkedTaskTitles.length - 2} more`
+                        : ""
+                    }`
                   : " · Independent"}
               </p>
             </div>

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { assertList, assertNoError, assertSingle } from "@/lib/db/utils";
-import type { Session, SessionItem } from "@/lib/types/database";
+import type { Session, SessionItem, Task } from "@/lib/types/database";
 
 export type SessionItemNode = SessionItem & {
   children: SessionItemNode[];
@@ -67,6 +67,81 @@ export async function createSession(input: {
     .single();
 
   return assertSingle("createSession", result);
+}
+
+export async function setSessionLinkedTasks(
+  sessionId: string,
+  taskIds: string[]
+): Promise<void> {
+  const supabase = await createClient();
+
+  const deleteResult = await supabase
+    .from("session_linked_tasks")
+    .delete()
+    .eq("session_id", sessionId);
+
+  assertNoError("setSessionLinkedTasks", { data: null, error: deleteResult.error });
+
+  const uniqueIds = [...new Set(taskIds)];
+  if (uniqueIds.length === 0) {
+    return;
+  }
+
+  const insertResult = await supabase.from("session_linked_tasks").insert(
+    uniqueIds.map((taskId) => ({ session_id: sessionId, task_id: taskId }))
+  );
+
+  assertNoError("setSessionLinkedTasks", { data: null, error: insertResult.error });
+}
+
+export async function getSessionLinkedTasks(sessionId: string): Promise<Task[]> {
+  const supabase = await createClient();
+  const result = await supabase
+    .from("session_linked_tasks")
+    .select("tasks(*)")
+    .eq("session_id", sessionId);
+
+  if (result.error) {
+    throw new Error(`getSessionLinkedTasks: ${result.error.message}`);
+  }
+
+  return ((result.data ?? []) as unknown as { tasks: Task }[])
+    .map((row) => row.tasks)
+    .filter((task): task is Task => Boolean(task));
+}
+
+export async function getLinkedTasksBySessionIds(
+  sessionIds: string[]
+): Promise<Map<string, Task[]>> {
+  const map = new Map<string, Task[]>();
+
+  if (sessionIds.length === 0) {
+    return map;
+  }
+
+  const supabase = await createClient();
+  const result = await supabase
+    .from("session_linked_tasks")
+    .select("session_id, tasks(*)")
+    .in("session_id", sessionIds);
+
+  if (result.error) {
+    throw new Error(`getLinkedTasksBySessionIds: ${result.error.message}`);
+  }
+
+  for (const row of (result.data ?? []) as unknown as {
+    session_id: string;
+    tasks: Task | null;
+  }[]) {
+    if (!row.tasks) {
+      continue;
+    }
+    const list = map.get(row.session_id) ?? [];
+    list.push(row.tasks);
+    map.set(row.session_id, list);
+  }
+
+  return map;
 }
 
 export async function updateSession(

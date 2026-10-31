@@ -65,6 +65,7 @@ type PickableSubtask = Subtask & {
   taskTitle: string;
   workspace: string;
   depth: number;
+  category: string | null;
 };
 
 const LinkedSessionContext = createContext(false);
@@ -78,7 +79,7 @@ type SessionDetailProps = {
   session: Session;
   tree: SessionItemNode[];
   progress: number;
-  linkedTask: Task | null;
+  linkedTasks: Task[];
   pickableSubtasks: PickableSubtask[];
 };
 
@@ -86,7 +87,7 @@ export function SessionDetail({
   session,
   tree: initialTree,
   progress,
-  linkedTask,
+  linkedTasks,
   pickableSubtasks,
 }: SessionDetailProps) {
   const [pending, startTransition] = useTransition();
@@ -104,19 +105,24 @@ export function SessionDetail({
   }
 
   return (
-    <LinkedSessionContext.Provider value={linkedTask !== null}>
+    <LinkedSessionContext.Provider value={linkedTasks.length > 0}>
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          {linkedTask && (
-            <p className="mb-1 text-xs text-muted">
+          {linkedTasks.length > 0 && (
+            <p className="mb-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted">
               Linked to{" "}
-              <Link
-                href={`/${linkedTask.workspace}/${linkedTask.id}`}
-                className="text-accent hover:underline"
-              >
-                {linkedTask.title}
-              </Link>
+              {linkedTasks.map((task, index) => (
+                <span key={task.id} className="inline-flex items-center">
+                  <Link
+                    href={`/${task.workspace}/${task.id}`}
+                    className="text-accent hover:underline"
+                  >
+                    {task.title}
+                  </Link>
+                  {index < linkedTasks.length - 1 && ","}
+                </span>
+              ))}
             </p>
           )}
           <div className="max-w-md">
@@ -727,6 +733,45 @@ function AddSessionItemButtons({
   );
 }
 
+function SubtaskPickRow({
+  subtask,
+  checked,
+  linkedOnly,
+  onToggle,
+}: {
+  subtask: PickableSubtask;
+  checked: boolean;
+  linkedOnly: boolean;
+  onToggle: (id: string) => void;
+}) {
+  return (
+    <li>
+      <label
+        style={linkedOnly ? { marginLeft: `${subtask.depth * 16}px` } : undefined}
+        className={cn(
+          "flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 sm:py-2.5",
+          checked
+            ? "border-primary bg-primary/5"
+            : "border-border/70 bg-background/50"
+        )}
+      >
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={() => onToggle(subtask.id)}
+          className="h-4 w-4 shrink-0 cursor-pointer rounded border-border bg-background accent-primary"
+        />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm text-foreground">{subtask.title}</p>
+          <p className="truncate text-[11px] text-muted">
+            {linkedOnly ? subtask.taskTitle : `${subtask.workspace} · ${subtask.taskTitle}`}
+          </p>
+        </div>
+      </label>
+    </li>
+  );
+}
+
 function AddItemModal({
   open,
   onClose,
@@ -779,6 +824,26 @@ function AddItemModal({
       )
       .slice(0, limit);
   }, [pickableSubtasks, search, pickWorkspace, linkedOnly]);
+
+  const groupedFiltered = useMemo(() => {
+    if (linkedOnly) {
+      return null;
+    }
+
+    const groups = new Map<string, PickableSubtask[]>();
+    for (const item of filtered) {
+      const key = item.category?.trim() || "Uncategorized";
+      const list = groups.get(key) ?? [];
+      list.push(item);
+      groups.set(key, list);
+    }
+
+    return [...groups.entries()].sort(([a], [b]) => {
+      if (a === "Uncategorized") return 1;
+      if (b === "Uncategorized") return -1;
+      return a.localeCompare(b);
+    });
+  }, [filtered, linkedOnly]);
 
   function toggleSelected(id: string) {
     setSelectedIds((current) => {
@@ -912,37 +977,38 @@ function AddItemModal({
             />
             {filtered.length === 0 ? (
               <p className="text-sm text-muted">No open subtasks found.</p>
+            ) : groupedFiltered ? (
+              <div className="max-h-[45vh] space-y-4 overflow-y-auto sm:max-h-64">
+                {groupedFiltered.map(([category, items]) => (
+                  <div key={category}>
+                    <p className="mb-1.5 px-1 text-[11px] font-semibold uppercase tracking-wide text-muted">
+                      {category}
+                    </p>
+                    <ul className="space-y-2">
+                      {items.map((subtask) => (
+                        <SubtaskPickRow
+                          key={subtask.id}
+                          subtask={subtask}
+                          checked={selectedIds.has(subtask.id)}
+                          linkedOnly={linkedOnly}
+                          onToggle={toggleSelected}
+                        />
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
             ) : (
               <ul className="max-h-[45vh] space-y-2 overflow-y-auto sm:max-h-64">
-                {filtered.map((subtask) => {
-                  const checked = selectedIds.has(subtask.id);
-                  return (
-                    <li key={subtask.id}>
-                      <label
-                        style={linkedOnly ? { marginLeft: `${subtask.depth * 16}px` } : undefined}
-                        className={cn(
-                          "flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 sm:py-2.5",
-                          checked
-                            ? "border-primary bg-primary/5"
-                            : "border-border/70 bg-background/50"
-                        )}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleSelected(subtask.id)}
-                          className="h-4 w-4 shrink-0 cursor-pointer rounded border-border bg-background accent-primary"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm text-foreground">{subtask.title}</p>
-                          <p className="truncate text-[11px] text-muted">
-                            {linkedOnly ? subtask.taskTitle : `${subtask.workspace} · ${subtask.taskTitle}`}
-                          </p>
-                        </div>
-                      </label>
-                    </li>
-                  );
-                })}
+                {filtered.map((subtask) => (
+                  <SubtaskPickRow
+                    key={subtask.id}
+                    subtask={subtask}
+                    checked={selectedIds.has(subtask.id)}
+                    linkedOnly={linkedOnly}
+                    onToggle={toggleSelected}
+                  />
+                ))}
               </ul>
             )}
             <div className="flex items-center justify-between gap-2 pt-1">
