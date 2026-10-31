@@ -110,20 +110,18 @@ export function SessionDetail({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           {linkedTasks.length > 0 && (
-            <p className="mb-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted">
-              Linked to{" "}
-              {linkedTasks.map((task, index) => (
-                <span key={task.id} className="inline-flex items-center">
-                  <Link
-                    href={`/${task.workspace}/${task.id}`}
-                    className="text-accent hover:underline"
-                  >
-                    {task.title}
-                  </Link>
-                  {index < linkedTasks.length - 1 && ","}
-                </span>
+            <div className="mb-3 flex flex-wrap items-center gap-1.5">
+              <span className="text-xs text-muted">Linked to</span>
+              {linkedTasks.map((task) => (
+                <Link
+                  key={task.id}
+                  href={`/${task.workspace}/${task.id}`}
+                  className="truncate rounded-full border border-accent/30 bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent hover:bg-accent/15"
+                >
+                  {task.title}
+                </Link>
               ))}
-            </p>
+            </div>
           )}
           <div className="max-w-md">
             <ProgressBar value={progress} showLabel />
@@ -671,7 +669,6 @@ function AddSessionItemButtons({
   sessionId: string;
   pickableSubtasks: PickableSubtask[];
 }) {
-  const [pickOpen, setPickOpen] = useState(false);
   const [quickTitle, setQuickTitle] = useState("");
   const [pending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -711,24 +708,7 @@ function AddSessionItemButtons({
           Add
         </Button>
       </form>
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={() => setPickOpen(true)}
-        className="w-full gap-1.5 sm:w-auto"
-      >
-        <Link2 className="h-4 w-4" />
-        Pick subtasks from main task
-      </Button>
-
-      <AddItemModal
-        open={pickOpen}
-        onClose={() => setPickOpen(false)}
-        sessionId={sessionId}
-        pickableSubtasks={pickableSubtasks}
-        title="Pick from main task"
-        initialMode="pick"
-      />
+      <PickSubtasksPopover sessionId={sessionId} pickableSubtasks={pickableSubtasks} />
     </div>
   );
 }
@@ -772,39 +752,22 @@ function SubtaskPickRow({
   );
 }
 
-function AddItemModal({
-  open,
-  onClose,
+function SubtaskPickerPanel({
   sessionId,
-  parentItemId = null,
+  parentItemId,
   pickableSubtasks,
-  title,
-  initialMode = "new",
+  onClose,
 }: {
-  open: boolean;
-  onClose: () => void;
   sessionId: string;
-  parentItemId?: string | null;
+  parentItemId: string | null;
   pickableSubtasks: PickableSubtask[];
-  title: string;
-  initialMode?: "new" | "pick";
+  onClose: () => void;
 }) {
-  const [mode, setMode] = useState<"new" | "pick">(initialMode);
-  const [itemTitle, setItemTitle] = useState("");
   const [search, setSearch] = useState("");
   const [pickWorkspace, setPickWorkspace] = useState<"office" | "personal">("office");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [pending, startTransition] = useTransition();
   const linkedOnly = useContext(LinkedSessionContext);
-
-  useEffect(() => {
-    if (open) {
-      setMode(initialMode);
-      setItemTitle("");
-      setSearch("");
-      setSelectedIds(new Set());
-    }
-  }, [open, initialMode]);
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -857,21 +820,6 @@ function AddItemModal({
     });
   }
 
-  function handleAddNew(event: React.FormEvent) {
-    event.preventDefault();
-    const formData = new FormData();
-    formData.set("title", itemTitle);
-    if (parentItemId) {
-      formData.set("parent_item_id", parentItemId);
-    }
-
-    startTransition(async () => {
-      await addSessionItemAction(sessionId, formData);
-      setItemTitle("");
-      onClose();
-    });
-  }
-
   function handlePickSelected() {
     const chosen = pickableSubtasks.filter((item) => selectedIds.has(item.id));
     if (chosen.length === 0) {
@@ -885,6 +833,200 @@ function AddItemModal({
         )
       );
       setSelectedIds(new Set());
+      onClose();
+    });
+  }
+
+  return (
+    <div className="space-y-3">
+      {!linkedOnly && (
+        <div className="flex gap-2">
+          {WORKSPACE_TABS.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setPickWorkspace(id)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium motion-safe:transition-all",
+                pickWorkspace === id
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border text-muted hover:text-foreground"
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+      <Input
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder={linkedOnly ? "Search subtasks..." : `Search ${pickWorkspace} subtasks...`}
+        autoFocus
+      />
+      {filtered.length === 0 ? (
+        <p className="text-sm text-muted">No open subtasks found.</p>
+      ) : groupedFiltered ? (
+        <div className="max-h-[45vh] space-y-4 overflow-y-auto sm:max-h-64">
+          {groupedFiltered.map(([category, items]) => (
+            <div key={category}>
+              <p className="mb-1.5 px-1 text-[11px] font-semibold uppercase tracking-wide text-muted">
+                {category}
+              </p>
+              <ul className="space-y-2">
+                {items.map((subtask) => (
+                  <SubtaskPickRow
+                    key={subtask.id}
+                    subtask={subtask}
+                    checked={selectedIds.has(subtask.id)}
+                    linkedOnly={linkedOnly}
+                    onToggle={toggleSelected}
+                  />
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <ul className="max-h-[45vh] space-y-2 overflow-y-auto sm:max-h-64">
+          {filtered.map((subtask) => (
+            <SubtaskPickRow
+              key={subtask.id}
+              subtask={subtask}
+              checked={selectedIds.has(subtask.id)}
+              linkedOnly={linkedOnly}
+              onToggle={toggleSelected}
+            />
+          ))}
+        </ul>
+      )}
+      <div className="flex items-center justify-between gap-2 pt-1">
+        <p className="text-xs text-muted">{selectedIds.size} selected</p>
+        <div className="flex gap-2">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            disabled={pending || selectedIds.size === 0}
+            onClick={handlePickSelected}
+          >
+            {pending ? "Adding..." : `Add ${selectedIds.size} selected`}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PickSubtasksPopover({
+  sessionId,
+  pickableSubtasks,
+}: {
+  sessionId: string;
+  pickableSubtasks: PickableSubtask[];
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function onPointerDown(event: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", onPointerDown);
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={() => setOpen((value) => !value)}
+        className="w-full gap-1.5 sm:w-auto"
+      >
+        <Link2 className="h-4 w-4" />
+        Pick subtasks from main task
+      </Button>
+
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-30 mt-2 w-full rounded-xl border border-border bg-card p-3 shadow-2xl animate-scale-in sm:left-0 sm:right-auto sm:w-[26rem]">
+          <p className="mb-3 text-xs text-muted">
+            Tick one or more subtasks — they stay synced with your main task.
+          </p>
+          <SubtaskPickerPanel
+            sessionId={sessionId}
+            parentItemId={null}
+            pickableSubtasks={pickableSubtasks}
+            onClose={() => setOpen(false)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AddItemModal({
+  open,
+  onClose,
+  sessionId,
+  parentItemId = null,
+  pickableSubtasks,
+  title,
+  initialMode = "new",
+}: {
+  open: boolean;
+  onClose: () => void;
+  sessionId: string;
+  parentItemId?: string | null;
+  pickableSubtasks: PickableSubtask[];
+  title: string;
+  initialMode?: "new" | "pick";
+}) {
+  const [mode, setMode] = useState<"new" | "pick">(initialMode);
+  const [itemTitle, setItemTitle] = useState("");
+  const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (open) {
+      setMode(initialMode);
+      setItemTitle("");
+    }
+  }, [open, initialMode]);
+
+  function handleAddNew(event: React.FormEvent) {
+    event.preventDefault();
+    const formData = new FormData();
+    formData.set("title", itemTitle);
+    if (parentItemId) {
+      formData.set("parent_item_id", parentItemId);
+    }
+
+    startTransition(async () => {
+      await addSessionItemAction(sessionId, formData);
+      setItemTitle("");
       onClose();
     });
   }
@@ -948,87 +1090,12 @@ function AddItemModal({
             </div>
           </form>
         ) : (
-          <div className="space-y-3">
-            {!linkedOnly && (
-            <div className="flex gap-2">
-              {WORKSPACE_TABS.map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setPickWorkspace(id)}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium motion-safe:transition-all",
-                    pickWorkspace === id
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border text-muted hover:text-foreground"
-                  )}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {label}
-                </button>
-              ))}
-            </div>
-            )}
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={linkedOnly ? "Search subtasks..." : `Search ${pickWorkspace} subtasks...`}
-              autoFocus
-            />
-            {filtered.length === 0 ? (
-              <p className="text-sm text-muted">No open subtasks found.</p>
-            ) : groupedFiltered ? (
-              <div className="max-h-[45vh] space-y-4 overflow-y-auto sm:max-h-64">
-                {groupedFiltered.map(([category, items]) => (
-                  <div key={category}>
-                    <p className="mb-1.5 px-1 text-[11px] font-semibold uppercase tracking-wide text-muted">
-                      {category}
-                    </p>
-                    <ul className="space-y-2">
-                      {items.map((subtask) => (
-                        <SubtaskPickRow
-                          key={subtask.id}
-                          subtask={subtask}
-                          checked={selectedIds.has(subtask.id)}
-                          linkedOnly={linkedOnly}
-                          onToggle={toggleSelected}
-                        />
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <ul className="max-h-[45vh] space-y-2 overflow-y-auto sm:max-h-64">
-                {filtered.map((subtask) => (
-                  <SubtaskPickRow
-                    key={subtask.id}
-                    subtask={subtask}
-                    checked={selectedIds.has(subtask.id)}
-                    linkedOnly={linkedOnly}
-                    onToggle={toggleSelected}
-                  />
-                ))}
-              </ul>
-            )}
-            <div className="flex items-center justify-between gap-2 pt-1">
-              <p className="text-xs text-muted">
-                {selectedIds.size} selected
-              </p>
-              <div className="flex gap-2">
-                <Button type="button" variant="secondary" onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  disabled={pending || selectedIds.size === 0}
-                  onClick={handlePickSelected}
-                >
-                  {pending ? "Adding..." : `Add ${selectedIds.size} selected`}
-                </Button>
-              </div>
-            </div>
-          </div>
+          <SubtaskPickerPanel
+            sessionId={sessionId}
+            parentItemId={parentItemId}
+            pickableSubtasks={pickableSubtasks}
+            onClose={onClose}
+          />
         )}
       </div>
     </Modal>
